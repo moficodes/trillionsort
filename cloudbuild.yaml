@@ -1,38 +1,38 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-generate'
-    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/generate:$TAG_NAME', '-f', 'docker/Dockerfile.generate','.' ]
+    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/generate:$COMMIT_SHA', '-f', 'docker/Dockerfile.generate','.' ]
     waitFor: [ '-' ]
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/generate:$TAG_NAME' ]
+    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/generate:$COMMIT_SHA' ]
     waitFor: [ 'build-generate' ]
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-joinfile'
-    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/joinfile:$TAG_NAME', '-f', 'docker/Dockerfile.joinfile','.' ]
+    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/joinfile:$COMMIT_SHA', '-f', 'docker/Dockerfile.joinfile','.' ]
     waitFor: [ '-' ]
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/joinfile:$TAG_NAME' ]
+    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/joinfile:$COMMIT_SHA' ]
     waitFor: [ 'build-joinfile' ]
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-filesplit'
-    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/filesplit:$TAG_NAME', '-f', 'docker/Dockerfile.filesplit','.' ]
+    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/filesplit:$COMMIT_SHA', '-f', 'docker/Dockerfile.filesplit','.' ]
     waitFor: [ '-' ]
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/filesplit:$TAG_NAME' ]
+    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/filesplit:$COMMIT_SHA' ]
     waitFor: [ 'build-filesplit' ] 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-sortfile'
-    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/sortfile:$TAG_NAME', '-f', 'docker/Dockerfile.sortfile','.' ]
+    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/sortfile:$COMMIT_SHA', '-f', 'docker/Dockerfile.sortfile','.' ]
     waitFor: [ '-' ]
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/sortfile:$TAG_NAME' ]
+    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/sortfile:$COMMIT_SHA' ]
     waitFor: [ 'build-sortfile' ]
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-externalsort'
-    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/externalsort:$TAG_NAME', '-f', 'docker/Dockerfile.externalsort','.' ]
+    args: [ 'build', '-t', 'us-docker.pkg.dev/$PROJECT_ID/images/externalsort:$COMMIT_SHA', '-f', 'docker/Dockerfile.externalsort','.' ]
     waitFor: [ '-' ]
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/externalsort:$TAG_NAME' ]
+    args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/externalsort:$COMMIT_SHA' ]
     waitFor: [ 'build-externalsort' ] 
 options:
   logging: CLOUD_LOGGING_ONLY
