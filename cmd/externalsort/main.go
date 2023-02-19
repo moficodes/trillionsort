@@ -50,7 +50,7 @@ func main() {
 	flag.Parse()
 
 	if ver {
-		fmt.Printf("joinfile %s (%s) %s\n", version, commit, date)
+		fmt.Printf("externalsort %s (%s) %s\n", version, commit, date)
 		os.Exit(0)
 	}
 
