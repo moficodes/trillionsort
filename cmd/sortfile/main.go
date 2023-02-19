@@ -20,6 +20,7 @@ var (
 	index      string
 	linelength int
 	batchSize  int
+	check      bool
 	ver        bool
 	version    string = "v0.0.0"
 	commit     string = "unknown"
@@ -43,6 +44,7 @@ func init() {
 	flag.StringVar(&index, "index", "", "index of file")
 	flag.IntVar(&linelength, "linelength", 17, "length of line")
 	flag.IntVar(&batchSize, "batchsize", 100000, "batch size")
+	flag.BoolVar(&check, "check", false, "check if file is sorted")
 	flag.BoolVar(&ver, "version", false, "print version and exit")
 }
 
@@ -77,6 +79,17 @@ func main() {
 	data, err := fileops.ReadData(input, linecount)
 	if err != nil {
 		os.Exit(1)
+	}
+
+	if check {
+		log.Info("Checking if file is sorted")
+		if fileops.IsSorted(data) {
+			log.Info("File is sorted")
+			os.Exit(0)
+		} else {
+			log.Info("File is not sorted")
+			os.Exit(1)
+		}
 	}
 
 	sort.Strings(data)

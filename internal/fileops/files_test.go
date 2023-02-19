@@ -220,3 +220,17 @@ func BenchmarkWriteFile10_000_50workers(b *testing.B) {
 		WriteToFile(ctx, filename, 50, 200, 1, 17)
 	}
 }
+
+func BenchmarkMergeSortedFiles(b *testing.B) {
+	files, err := FindFilesInDir("testdata", "output")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		err := MergeSortedFiles(files, "testdata/output.txt", 1, 17)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

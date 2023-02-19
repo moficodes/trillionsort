@@ -2,6 +2,7 @@ package fileops
 
 import (
 	"bufio"
+	"container/heap"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -144,6 +145,15 @@ func FindFilesInDir(dirPath string, pattern string) ([]string, error) {
 	return matchingFiles, nil
 }
 
+func IsSorted(data []string) bool {
+	for i := 0; i < len(data)-1; i++ {
+		if data[i] > data[i+1] {
+			return false
+		}
+	}
+	return true
+}
+
 func CopyFiles(files []string, output string, buffersize int) (int64, error) {
 	// Open the output file for writing.
 	dest, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -196,6 +206,7 @@ func ReadData(r io.Reader, linecount int64) ([]string, error) {
 	idx := 0
 	for scanner.Scan() {
 		res[idx] = scanner.Text()
+		idx++
 	}
 	return res, scanner.Err()
 }
@@ -241,16 +252,6 @@ func WriteData(w io.Writer, data []string, batchSize int) (int, error) {
 	write, err := w.Write([]byte(strings.Join(data[idx:], "\n") + "\n"))
 	written += write
 	return written, err
-}
-
-func writeInts(w io.Writer, data []uint64) error {
-	for _, d := range data {
-		_, err := fmt.Fprintf(w, "%016x\n", d)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func WriteToFile(ctx context.Context, filename string, goroutines, dataPerGoroutine, bufferSize, lineLength int) error {
@@ -310,6 +311,92 @@ func write(ctx context.Context, w io.Writer, goroutines, dataPerGoroutine, buffe
 	}
 
 	return errs.Wait()
+}
+
+func MergeSortedFiles(fileNames []string, outputFileName string, bufferSize, linelength int) error {
+	files := make([]*os.File, len(fileNames))
+	defer func() {
+		for _, file := range files {
+			file.Close()
+		}
+	}()
+
+	// Open all the input files
+	for i, fileName := range fileNames {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return err
+		}
+		files[i] = file
+	}
+
+	// Create the output file
+	outFile, err := os.Create(outputFileName)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	// Initialize the min heap with the first value from each file
+	h := &minHeap{}
+
+	limit := bufferSize * 1024 * 1024
+	outputBuffer := make([]byte, 0, limit)
+
+	for _, file := range files {
+		buf := make([]byte, 17)
+		_, err := file.Read(buf)
+		if err != nil {
+			continue
+		}
+
+		// Remove the newline character from the line
+		heap.Push(h, &fileItem{
+			file: file,
+			val:  buf,
+		})
+	}
+
+	flushAndReuse := func() error {
+		_, err := outFile.Write(outputBuffer)
+		outputBuffer = outputBuffer[:0]
+		return err
+	}
+
+	// Pop the smallest value from the heap and write it to the output file
+	for h.Len() > 0 {
+		item := heap.Pop(h).(*fileItem)
+
+		outputBuffer = append(outputBuffer, item.val...)
+		if len(outputBuffer) >= limit {
+			if err := flushAndReuse(); err != nil {
+				return err
+			}
+
+		}
+		// Read the next value from the file and add it to the heap
+		buf := make([]byte, 17)
+		_, err := item.file.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				continue
+			}
+			return err
+		}
+
+		heap.Push(h, &fileItem{
+			file: item.file,
+			val:  buf,
+		})
+	}
+
+	return flushAndReuse()
+}
+
+func ReadLine(r io.Reader) (string, error) {
+	scanner := bufio.NewScanner(r)
+	scanner.Scan()
+	return scanner.Text(), scanner.Err()
 }
 
 func GetFileName(filename, fileindex string) (string, error) {

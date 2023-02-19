@@ -51,6 +51,7 @@ func init() {
 }
 
 func main() {
+	defer stat.Duration("split", time.Now(), log)
 	flag.Parse()
 
 	if ver {
@@ -62,8 +63,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	defer stat.Duration("split", time.Now(), log)
 
 	if goroutine > count {
 		goroutine = count
