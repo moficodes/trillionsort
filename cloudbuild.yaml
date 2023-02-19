@@ -34,3 +34,5 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [ 'push', 'us-docker.pkg.dev/$PROJECT_ID/images/externalsort:$TAG_NAME' ]
     waitFor: [ 'build-externalsort' ] 
+options:
+  logging: CLOUD_LOGGING_ONLY
