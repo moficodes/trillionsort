@@ -211,19 +211,7 @@ func ReadData(r io.Reader, linecount int64) ([]string, error) {
 	return res, scanner.Err()
 }
 
-func readInt(r io.Reader) ([]uint64, error) {
-	scanner := bufio.NewScanner(r)
-	var res []uint64
-	for scanner.Scan() {
-		i, err := strconv.ParseUint(scanner.Text(), 16, 64)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, i)
-	}
-	return res, scanner.Err()
-}
-
+// WriteDataLineByLine writes data line by line
 func WriteDataLineByLine(w io.Writer, data []string) (int, error) {
 	writer := bufio.NewWriter(w)
 	defer writer.Flush()
