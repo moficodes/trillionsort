@@ -37,7 +37,8 @@ builds:
       - darwin
     ldflags:
       - "-s -w -X main.version=v{{ .Version }} main.commit={{ .Commit }} main.date={{ .Date }}"
-  - env:
+  - id: "sortfile"
+    env:
       - CGO_ENABLED=0
     main: ./cmd/sortfile/main.go
 
