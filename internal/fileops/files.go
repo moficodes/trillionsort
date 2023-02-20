@@ -24,7 +24,7 @@ func copyChunk(in io.Reader, out io.ReaderFrom, n int64) (int64, error) {
 	return out.ReadFrom(part)
 }
 
-func split(count, bufferMB, linelength int, f io.ReadSeeker, fileSize int64, filenamePrefix string) error {
+func split(count, bufferMB, linelength int, f io.ReadSeeker, fileSize int64, filenamePrefix, output string) error {
 	// each line is 17 bytes
 	// so we can calculate the number of lines per chunk
 	linesPerChunk := int((fileSize / int64(linelength)) / int64(count))
@@ -42,7 +42,11 @@ func split(count, bufferMB, linelength int, f io.ReadSeeker, fileSize int64, fil
 		if err != nil {
 			return err
 		}
-		file, err := os.OpenFile(fmt.Sprintf("%s_%04d.txt", filenamePrefix, i+1), os.O_CREATE|os.O_WRONLY, 0644)
+		filename, err := GetFileName(output, strconv.Itoa(i))
+		if err != nil {
+			return err
+		}
+		file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
 		}
@@ -68,8 +72,8 @@ func split(count, bufferMB, linelength int, f io.ReadSeeker, fileSize int64, fil
 	return nil
 }
 
-func SplitFile(count, buffer, linelength int, filename, filenamePrefix string) error {
-	f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+func SplitFile(count, buffer, linelength int, input, output string) error {
+	f, err := os.OpenFile(input, os.O_RDONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -80,11 +84,11 @@ func SplitFile(count, buffer, linelength int, filename, filenamePrefix string) e
 		return err
 	}
 	fileSize := fi.Size()
-	return split(count, buffer, linelength, f, fileSize, filenamePrefix)
+	return split(count, buffer, linelength, f, fileSize, input, output)
 }
 
-func SplitFileParallel(ctx context.Context, count, goroutine, bufferMB, linelength int, filename, filenamePrefix string) error {
-	fi, err := os.Stat(filename)
+func SplitFileParallel(ctx context.Context, count, goroutine, bufferMB, linelength int, input, output string) error {
+	fi, err := os.Stat(input)
 	if err != nil {
 		return err
 	}
@@ -99,11 +103,15 @@ func SplitFileParallel(ctx context.Context, count, goroutine, bufferMB, lineleng
 	for i := 0; i < count; i++ {
 		i := i
 		errs.Go(func() error {
-			source, err := os.Open(filename)
+			source, err := os.Open(input)
 			if err != nil {
 				return err
 			}
-			destination, err := os.OpenFile(fmt.Sprintf("%s_%04d.txt", filenamePrefix, i+1), os.O_CREATE|os.O_WRONLY, 0644)
+			outFile, err := GetFileName(output, strconv.Itoa(i))
+			if err != nil {
+				return err
+			}
+			destination, err := os.OpenFile(outFile, os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				return nil
 			}

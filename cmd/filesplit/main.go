@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/moficodes/trillionsort/internal/fileops"
@@ -15,7 +14,8 @@ import (
 )
 
 var (
-	filename   string
+	input      string
+	output     string
 	count      int
 	goroutine  int
 	buffer     int
@@ -41,7 +41,8 @@ func init() {
 		TimestampFormat: time.RFC3339Nano,
 	}
 	log.Out = os.Stdout
-	flag.StringVar(&filename, "file", "input.txt", "file name to split")
+	flag.StringVar(&input, "input", "input.txt", "file name to split")
+	flag.StringVar(&output, "output", "output.txt", "file name to output to")
 	flag.IntVar(&count, "count", 0, "split the file in these many files")
 	flag.BoolVar(&ver, "version", false, "show version")
 	flag.IntVar(&buffer, "buffer", 1, "buffer size in MB")
@@ -68,14 +69,12 @@ func main() {
 		goroutine = count
 	}
 
-	filenamePrefix := strings.Split(filename, ".")[0]
-
-	log.Infof("splitting file %s into %d files with buffer size %d MB", filename, count, buffer)
+	log.Infof("splitting file %s into %d files with buffer size %d MB", input, count, buffer)
 	var err error
 	if parallel {
-		err = fileops.SplitFileParallel(context.Background(), count, goroutine, buffer, linelength, filename, filenamePrefix)
+		err = fileops.SplitFileParallel(context.Background(), count, goroutine, buffer, linelength, input, output)
 	} else {
-		err = fileops.SplitFile(count, buffer, linelength, filename, filenamePrefix)
+		err = fileops.SplitFile(count, buffer, linelength, input, output)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

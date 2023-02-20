@@ -1,7 +1,7 @@
 GENERATE := generate
 JOINFILE := joinfile
 SORTFILE := sortfile
-SPLITFILE := splitfile
+FILESPLIT := filesplit
 EXTERNALSORT := externalsort
 
 clean:
@@ -15,9 +15,9 @@ generate:
 	rm -f $(GENERATE)
 	CGO_ENABLED=0 go build -o $(GENERATE) -ldflags="-s -w" cmd/generate/main.go
 
-splitfile:
-	rm -rf $(SPLITFILE)
-	CGO_ENABLED=0 go build -o $(SPLITFILE) -ldflags="-s -w" cmd/splitfile/main.go
+filesplit:
+	rm -rf $(FILESPLIT)
+	CGO_ENABLED=0 go build -o $(FILESPLIT) -ldflags="-s -w" cmd/filesplit/main.go
 
 joinfile:
 	rm -rf $(JOINFILE)
@@ -31,4 +31,4 @@ externalsort:
 	rm -rf $(EXTERNALSORT)
 	CGO_ENABLED=0 go build -o $(EXTERNALSORT) -ldflags="-s -w" cmd/externalsort/main.go
 
-.PHONY: clean generate joinfile sortfile externalsort splitfile
+.PHONY: clean generate joinfile sortfile externalsort filesplit

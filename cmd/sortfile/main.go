@@ -94,7 +94,12 @@ func main() {
 
 	sort.Strings(data)
 
-	outfile, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	outputFileName, err := fileops.GetFileName(output, index)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	outfile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
