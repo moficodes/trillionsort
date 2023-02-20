@@ -1,0 +1,90 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: trillionsort-sort-
+spec:
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 655345
+  entrypoint: sort-data
+  volumes:
+  - name: filestore
+    persistentVolumeClaim:
+      claimName: podpvc
+  templates:
+  - name: sort-data
+    steps:
+    - - name: split
+        template: split
+    - - name: generate
+        template: sequence
+    - - name: sort
+        template: sort
+        arguments:
+          parameters:
+          - name: index
+            value: "{{item}}"  # The result of the script
+        withParam: "{{steps.generate.outputs.result}}"
+    - - name: merge
+        template: merge
+
+  - name: sequence
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+        import sys
+        # This is one way to fanout the jobs to multiple pods
+        count = 10
+        json.dump([i for i in range(0, count)], sys.stdout)
+
+  - name: split
+    container:
+      image: us-docker.pkg.dev/trillionsort/images/filesplit:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      command: ["/filesplit"]
+      args: ["-count", "10", "-input", "data/join.txt", "-output", "data/split.txt"]
+      volumeMounts:
+        - name: filestore
+          mountPath: "/data"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+  - name: sort
+    inputs:
+      parameters:
+      - name: index
+    container:
+      image: us-docker.pkg.dev/trillionsort/images/sortfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      command: ["/sortfile"]
+      args: ["-input", "data/split.txt", "-index", "{{inputs.parameters.index}}", "-output", "data/sort.txt"]
+      volumeMounts:
+        - name: filestore
+          mountPath: "/data"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+  - name: merge
+    container: 
+      image: us-docker.pkg.dev/trillionsort/images/externalsort:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      command: ["/externalsort"]
+      args: ["-dir", "data", "-pattern", "sort", "-output", "data/merge.txt"]
+      volumeMounts:
+        - name: filestore
+          mountPath: "/data"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "2"
+          memory: "4Gi"

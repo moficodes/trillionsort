@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: trillionsort-generate-
+spec:
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 655345
+  entrypoint: generate-data
+  volumes:
+  - name: filestore
+    persistentVolumeClaim:
+      claimName: podpvc
+  templates:
+  - name: generate-data
+    steps:
+    - - name: generate
+        template: sequence
+    - - name: gen
+        template: gen-numbers
+        arguments:
+          parameters:
+          - name: message
+            value: "{{item}}"  # The result of the script
+        withParam: "{{steps.generate.outputs.result}}"
+    - - name: join
+        template: join
+
+  - name: sequence
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+        import json
+        import sys
+        # This is one way to fanout the jobs to multiple pods
+        count = 10
+        json.dump([i for i in range(0, count)], sys.stdout)
+
+  - name: gen-numbers
+    inputs:
+      parameters:
+      - name: message
+    container:
+      image: us-docker.pkg.dev/trillionsort/images/generate:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      command: ["/generate"]
+      args: ["-count", "10_000_000", "-file", "data/generate.txt", "-fileindex", "{{inputs.parameters.message}}"]
+      volumeMounts:
+        - name: filestore
+          mountPath: "/data"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+  - name: join
+    container:
+      image: us-docker.pkg.dev/trillionsort/images/joinfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      command: ["/joinfile"]
+      args: ["-dir", "data", "-pattern", "generate", "-output", "data/join.txt"]
+      volumeMounts:
+        - name: filestore
+          mountPath: "/data"
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "2"
+          memory: "4Gi"
