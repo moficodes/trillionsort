@@ -1,12 +1,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: generate
+  name: join
 spec:
   ttlSecondsAfterFinished: 100
-  completions: 10
-  parallelism: 10
-  completionMode: Indexed
+  completions: 1
   template:
     spec:
       securityContext:
@@ -19,10 +17,10 @@ spec:
             claimName: podpvc
             readOnly: false
       containers:
-      - name: generate
-        image: us-docker.pkg.dev/trillionsort/images/generate:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
-        command: ["/generate"]
-        args: ["-count", "10_000_000", "-file", "data/generate.txt", "-fileindex", "$(JOB_COMPLETION_INDEX)"]
+      - name: join
+        image: us-docker.pkg.dev/trillionsort/images/joinfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+        command: ["/joinfile"]
+        args: ["-dir", "data", "-pattern", "generate", "-output", "data/join.txt"]
         volumeMounts:
           - name: filestore
             mountPath: "/data"
