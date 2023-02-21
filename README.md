@@ -16,7 +16,7 @@ Given a large quantity of numbers, sort them. This is classic problem in compute
 
     This would work. But to push through a trillion numbers through a message queue would be a slow process. Also the message queue would need to be able to handle a trillion messages. We would save some time in getting the final file as each sorted file just need to be appended in order. But the network overhead would be bad enough to make this a less than optimal solution.
 
-3. Use a distributed file system to store the numbers and sort them in parallel. Then join the files in a k way merge. A similar problem to this is a pretty common problem for interviews. You can learn more about [Merge K Sorted Array](https://www.geeksforgeeks.org/merge-k-sorted-arrays/). 
+3. Use a distributed file system to store the numbers and sort them in parallel. Then join the files in a k way merge. A similar problem to this is a pretty common problem for interviews. You can learn more about [Merge K Sorted Array](https://www.geeksforgeeks.org/merge-k-sorted-arrays/).
 
     This is how we are implementing this solution. This is not perfect as we still rely on network for file storage. But thats the price of distributed computing.
 
@@ -122,3 +122,9 @@ Sort the data
 ```bash
 argo submit --watch workflow-sort.yaml
 ```
+
+## Possible Improvements
+
+1. Instead of using nfs file mount and send data over the network, we can use local SSDs and write to nfs only when necessary.
+2. We can use a faster filestore tier like high scale ssd which has write speed of upto 8.8GB/s. Write now our speed is about 100MB/s.
+3. Right now we are doing sequential sorts which is CPU bound. We can make use of GPU and sort in parallel.
