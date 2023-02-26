@@ -70,6 +70,11 @@ func main() {
 
 	buffer := bufferSize * 1024 * 1024
 
+	err = fileops.DeleteFileIfExists(output)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	read, err := fileops.CopyFiles(files, output, buffer)
 	if err != nil {
 		log.Fatal(err)

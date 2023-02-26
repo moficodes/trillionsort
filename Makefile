@@ -31,4 +31,7 @@ externalsort:
 	rm -rf $(EXTERNALSORT)
 	CGO_ENABLED=0 go build -o $(EXTERNALSORT) -ldflags="-s -w" cmd/externalsort/main.go
 
-.PHONY: clean generate joinfile sortfile externalsort filesplit
+all: generate joinfile sortfile externalsort filesplit
+	echo "build success"
+
+.PHONY: clean generate joinfile sortfile externalsort filesplit all

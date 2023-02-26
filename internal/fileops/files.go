@@ -46,6 +46,12 @@ func split(count, bufferMB, linelength int, f io.ReadSeeker, fileSize int64, fil
 		if err != nil {
 			return err
 		}
+
+		err = DeleteFileIfExists(filename)
+		if err != nil {
+			return err
+		}
+
 		file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
@@ -265,6 +271,18 @@ func WriteToFile(ctx context.Context, filename string, goroutines, dataPerGorout
 	return bf.Flush()
 }
 
+func DeleteFileIfExists(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	return nil
+}
 func write(ctx context.Context, w io.Writer, goroutines, dataPerGoroutine, bufferSize, linelength int) error {
 	errs, _ := errgroup.WithContext(ctx)
 	var filelock sync.Mutex

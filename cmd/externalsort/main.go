@@ -68,6 +68,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = fileops.DeleteFileIfExists(output)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Infof("merging %d files", len(files))
 	fileops.MergeSortedFiles(files, output, bufferSize, linelength)
 	log.Info(stat.MemUsage())

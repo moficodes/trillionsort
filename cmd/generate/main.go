@@ -81,6 +81,12 @@ func main() {
 	count = count - (count % goroutine)
 
 	log.Infof("total count: %d, goroutine: %d, gen per goroutine: %d", count, goroutine, dataPerGoroutine)
+
+	err = fileops.DeleteFileIfExists(outputFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = fileops.WriteToFile(context.Background(), outputFile, goroutine, dataPerGoroutine, bufferSize, linelength)
 	if err != nil {
 		log.Error(err)

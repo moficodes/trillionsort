@@ -75,8 +75,7 @@ func main() {
 	fileSize := fi.Size()
 
 	log.Infof("File size: %s", stat.HumanReadableFilesize(fileSize))
-	linecount := fileSize / int64(linelength)
-	data, err := fileops.ReadData(input, linecount)
+	data, err := fileops.ReadDataScan(input)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -92,12 +91,17 @@ func main() {
 		}
 	}
 
-	sort.Strings(data)
-
 	outputFileName, err := fileops.GetFileName(output, index)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = fileops.DeleteFileIfExists(outputFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sort.Strings(data)
 
 	outfile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
