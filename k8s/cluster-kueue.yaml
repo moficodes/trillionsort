@@ -1,0 +1,18 @@
+# cluster-queue.yaml
+apiVersion: kueue.x-k8s.io/v1alpha2
+kind: ClusterQueue
+metadata:
+  name: cluster-queue
+spec:
+  namespaceSelector: {} # match all.
+  resources:
+  - name: "cpu"
+    flavors:
+    - name: default-flavor
+      quota:
+        min: 40
+  - name: "memory"
+    flavors:
+    - name: default-flavor
+      quota:
+        min: 160Gi
