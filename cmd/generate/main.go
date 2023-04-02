@@ -46,7 +46,7 @@ func init() {
 	}
 	log.Out = os.Stdout
 	flag.IntVar(&count, "count", 0, "number of record to generate")
-	flag.IntVar(&goroutine, "goroutine", 0, "number of goroutine to run")
+	flag.IntVar(&goroutine, "goroutine", 1, "number of goroutine to run")
 	flag.StringVar(&filename, "file", "input.txt", "name of the file")
 	flag.IntVar(&bufferSize, "buffer", 1, "buffer size in Mb")
 	flag.IntVar(&linelength, "linelength", 17, "length of the line (length of each number + 1 for newline)")
@@ -122,13 +122,6 @@ func main() {
 		LineLength:       linelength,
 		Bucket:           bucket,
 	}
-
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-	defer f.Close()
 
 	if err := write(context.Background(), filename, cfg); err != nil {
 		log.Error(err)

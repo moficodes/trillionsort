@@ -20,7 +20,7 @@ spec:
             readOnly: false
       containers:
       - name: split
-        image: us-docker.pkg.dev/trillionsort/images/filesplit:6327330fbfdb0baceee563ac36dafc0d5e7554b0
+        image: us-docker.pkg.dev/trillionsort/images/filesplit:dd98a377f17617915577da4528e62defcc974094
         command: ["/filesplit"]
         args: ["-count", "10", "-input", "data/join.txt", "-output", "data/split.txt"]        
         volumeMounts:

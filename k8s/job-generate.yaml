@@ -16,21 +16,15 @@ spec:
         runAsGroup: 65534
         fsGroup: 65534
       volumes:
-        - name: filestore
-          persistentVolumeClaim:
-            claimName: podpvc
-            readOnly: false
         - name: google-cloud-key
           secret:
             secretName: gcs-key
       containers:
       - name: generate
-        image: us-docker.pkg.dev/trillionsort/images/generate:6327330fbfdb0baceee563ac36dafc0d5e7554b0
+        image: us-docker.pkg.dev/trillionsort/images/generate:dd98a377f17617915577da4528e62defcc974094
         command: ["/generate"]
-        args: ["-count", "10_000_000", "-file", "data/generate.txt", "-fileindex", "$(JOB_COMPLETION_INDEX)"]
+        args: ["-count", "1_000_000", "-file", "generate.txt", "-fileindex", "$(JOB_COMPLETION_INDEX)", "-objectstorage", "-bucket", "demo-00-mofi"]
         volumeMounts:
-          - name: filestore
-            mountPath: "/data"
           - name: google-cloud-key
             mountPath: "/var/secrets/google"
         env:
@@ -38,9 +32,9 @@ spec:
             value: "/var/secrets/google/key.json"
         resources:
           requests:
-            memory: "6Gi"
-            cpu: "2"
+            memory: "1Gi"
+            cpu: "1"
           limits:
-            memory: "6Gi"
-            cpu: "2"
+            memory: "1Gi"
+            cpu: "1"
       restartPolicy: Never

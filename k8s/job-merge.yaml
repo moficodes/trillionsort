@@ -20,7 +20,7 @@ spec:
             readOnly: false
       containers:
       - name: externalsort
-        image: us-docker.pkg.dev/trillionsort/images/externalsort:6327330fbfdb0baceee563ac36dafc0d5e7554b0
+        image: us-docker.pkg.dev/trillionsort/images/externalsort:dd98a377f17617915577da4528e62defcc974094
         command: ["/externalsort"]
         args: ["-dir", "data", "-pattern", "sort", "-output", "data/merge.txt"]
         volumeMounts:
