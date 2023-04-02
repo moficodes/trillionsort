@@ -43,7 +43,7 @@ spec:
       parameters:
       - name: message
     container:
-      image: us-docker.pkg.dev/trillionsort/images/generate:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      image: us-docker.pkg.dev/trillionsort/images/generate:6327330fbfdb0baceee563ac36dafc0d5e7554b0
       command: ["/generate"]
       args: ["-count", "10_000_000", "-file", "data/generate.txt", "-fileindex", "{{inputs.parameters.message}}"]
       volumeMounts:
@@ -58,7 +58,7 @@ spec:
           memory: "4Gi"
   - name: join
     container:
-      image: us-docker.pkg.dev/trillionsort/images/joinfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      image: us-docker.pkg.dev/trillionsort/images/joinfile:6327330fbfdb0baceee563ac36dafc0d5e7554b0
       command: ["/joinfile"]
       args: ["-dir", "data", "-pattern", "generate", "-output", "data/join.txt"]
       volumeMounts:

@@ -168,9 +168,15 @@ func BenchmarkWriteFile10_000_seq(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		filename := tmpfile.Name()
 
-		WriteToFile(ctx, filename, 1, 10_000, 1, 17)
+		cfg := &Config{
+			Goroutine:  1,
+			Count:      10000,
+			BufferSize: 1,
+			LineLength: 17,
+		}
+
+		WriteToFile(ctx, tmpfile, cfg)
 	}
 }
 
@@ -202,9 +208,15 @@ func BenchmarkWriteFile10_000_4workers(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		filename := tmpfile.Name()
 
-		WriteToFile(ctx, filename, 4, 2_500, 1, 17)
+		cfg := &Config{
+			Goroutine:  4,
+			Count:      2_500,
+			BufferSize: 1,
+			LineLength: 17,
+		}
+
+		WriteToFile(ctx, tmpfile, cfg)
 	}
 }
 
@@ -215,9 +227,15 @@ func BenchmarkWriteFile10_000_50workers(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		filename := tmpfile.Name()
 
-		WriteToFile(ctx, filename, 50, 200, 1, 17)
+		cfg := &Config{
+			Goroutine:  50,
+			Count:      200,
+			BufferSize: 1,
+			LineLength: 17,
+		}
+
+		WriteToFile(ctx, tmpfile, cfg)
 	}
 }
 

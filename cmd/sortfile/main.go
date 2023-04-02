@@ -48,71 +48,81 @@ func init() {
 	flag.BoolVar(&ver, "version", false, "print version and exit")
 }
 
-func main() {
+func run() error {
 	defer stat.Duration("sortfile", time.Now(), log)
-	flag.Parse()
 
 	if ver {
 		fmt.Printf("sortfile %s (%s) %s\n", version, commit, date)
-		os.Exit(0)
+		return nil
 	}
 
 	inputFile, err := fileops.GetFileName(input, index)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	log.Infof("Reading file: %s", inputFile)
 
 	input, err := os.Open(inputFile)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
 
 	defer input.Close()
 	fi, err := input.Stat()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	fileSize := fi.Size()
 
 	log.Infof("File size: %s", stat.HumanReadableFilesize(fileSize))
-	data, err := fileops.ReadDataScan(input)
-	if err != nil {
-		os.Exit(1)
-	}
-
 	if check {
 		log.Info("Checking if file is sorted")
-		if fileops.IsSorted(data) {
+		if fileops.IsSorted(input) {
 			log.Info("File is sorted")
-			os.Exit(0)
+			return nil
 		} else {
 			log.Info("File is not sorted")
-			os.Exit(1)
+			return nil
 		}
+	}
+	data, err := fileops.ReadDataScan(input)
+	if err != nil {
+		return err
 	}
 
 	outputFileName, err := fileops.GetFileName(output, index)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	err = fileops.DeleteFileIfExists(outputFileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	sort.Strings(data)
 
+	log.Infof("Writing to file: %s", outputFileName)
+
 	outfile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer outfile.Close()
 
 	written, err := fileops.WriteData(outfile, data, batchSize)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	log.Infof("Wrote %s to %s", stat.HumanReadableFilesize(int64(written)), output)
+	log.Infof("Wrote %s to %s", stat.HumanReadableFilesize(int64(written)), outputFileName)
+	return nil
+}
+
+func main() {
+	flag.Parse()
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
 }

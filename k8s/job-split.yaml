@@ -2,6 +2,8 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: split
+  annotations:
+    kueue.x-k8s.io/queue-name: user-queue
 spec:
   ttlSecondsAfterFinished: 100
   completions: 1
@@ -18,7 +20,7 @@ spec:
             readOnly: false
       containers:
       - name: split
-        image: us-docker.pkg.dev/trillionsort/images/filesplit:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+        image: us-docker.pkg.dev/trillionsort/images/filesplit:6327330fbfdb0baceee563ac36dafc0d5e7554b0
         command: ["/filesplit"]
         args: ["-count", "10", "-input", "data/join.txt", "-output", "data/split.txt"]        
         volumeMounts:
@@ -26,9 +28,9 @@ spec:
             mountPath: "/data"
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "20Gi"
+            cpu: "10"
           limits:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "20Gi"
+            cpu: "10"
       restartPolicy: Never

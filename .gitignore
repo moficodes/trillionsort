@@ -63,4 +63,5 @@ chrome-user-data
 *.swp
 *.swo
 
+service-account.json
 dist/

@@ -2,6 +2,8 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: sort
+  annotations:
+    kueue.x-k8s.io/queue-name: user-queue
 spec:
   ttlSecondsAfterFinished: 100
   completions: 10
@@ -20,7 +22,7 @@ spec:
             readOnly: false
       containers:
       - name: sort
-        image: us-docker.pkg.dev/trillionsort/images/sortfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+        image: us-docker.pkg.dev/trillionsort/images/sortfile:6327330fbfdb0baceee563ac36dafc0d5e7554b0
         command: ["/sortfile"]
         args: ["-input", "data/split.txt", "-index", "$(JOB_COMPLETION_INDEX)", "-output", "data/sort.txt"]
         volumeMounts:
@@ -28,9 +30,9 @@ spec:
             mountPath: "/data"
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "6Gi"
+            cpu: "2"
           limits:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "6Gi"
+            cpu: "2"
       restartPolicy: Never

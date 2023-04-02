@@ -2,6 +2,8 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: externalsort
+  annotations:
+    kueue.x-k8s.io/queue-name: user-queue
 spec:
   ttlSecondsAfterFinished: 100
   completions: 1
@@ -18,7 +20,7 @@ spec:
             readOnly: false
       containers:
       - name: externalsort
-        image: us-docker.pkg.dev/trillionsort/images/externalsort:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+        image: us-docker.pkg.dev/trillionsort/images/externalsort:6327330fbfdb0baceee563ac36dafc0d5e7554b0
         command: ["/externalsort"]
         args: ["-dir", "data", "-pattern", "sort", "-output", "data/merge.txt"]
         volumeMounts:
@@ -26,9 +28,9 @@ spec:
             mountPath: "/data"
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "12Gi"
+            cpu: "6"
           limits:
-            memory: "2Gi"
-            cpu: "4"
+            memory: "12Gi"
+            cpu: "6"
       restartPolicy: Never

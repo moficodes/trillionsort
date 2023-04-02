@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -17,6 +18,17 @@ import (
 
 	"golang.org/x/sync/errgroup"
 )
+
+type Config struct {
+	Count            int
+	Goroutine        int
+	DataPerGoroutine int
+	BufferSize       int
+	LineLength       int
+	FilenameIndex    string
+	Bucket           string
+	ObjectStorage    bool
+}
 
 func copyChunk(in io.Reader, out io.ReaderFrom, n int64) (int64, error) {
 	// ReaderFrom is a Writer that has the "Read from..." capability
@@ -159,11 +171,16 @@ func FindFilesInDir(dirPath string, pattern string) ([]string, error) {
 	return matchingFiles, nil
 }
 
-func IsSorted(data []string) bool {
-	for i := 0; i < len(data)-1; i++ {
-		if data[i] > data[i+1] {
+func IsSorted(reader io.Reader) bool {
+	scanner := bufio.NewScanner(reader)
+	previousLine := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line < previousLine {
+			log.Printf("line: %s, previousLine: %s\n", line, previousLine)
 			return false
 		}
+		previousLine = line
 	}
 	return true
 }
@@ -256,15 +273,18 @@ func WriteData(w io.Writer, data []string, batchSize int) (int, error) {
 	return written, err
 }
 
-func WriteToFile(ctx context.Context, filename string, goroutines, dataPerGoroutine, bufferSize, lineLength int) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	bufferByteSize := bufferSize * 1024 * 1024
-	bf := bufio.NewWriterSize(f, bufferByteSize)
-	err = write(ctx, bf, goroutines, dataPerGoroutine, bufferSize, lineLength)
+func Write(ctx context.Context, writer io.Writer, cfg *Config) error {
+	return write(ctx, writer, cfg.Goroutine, cfg.DataPerGoroutine, cfg.BufferSize, cfg.LineLength)
+}
+
+func WriteSync(ctx context.Context, writer io.Writer, cfg *Config) error {
+	return writeSync(ctx, writer, cfg.DataPerGoroutine, cfg.BufferSize, cfg.LineLength)
+}
+
+func WriteToFile(ctx context.Context, writer io.Writer, cfg *Config) error {
+	bufferByteSize := cfg.BufferSize * 1024 * 1024
+	bf := bufio.NewWriterSize(writer, bufferByteSize)
+	err := write(ctx, bf, cfg.Goroutine, cfg.DataPerGoroutine, cfg.BufferSize, cfg.LineLength)
 	if err != nil {
 		return err
 	}
@@ -283,6 +303,40 @@ func DeleteFileIfExists(path string) error {
 	}
 	return nil
 }
+
+func writeSync(ctx context.Context, w io.Writer, data, bufferSize, linelength int) error {
+	n := bufferSize * 1024 * 4 // number of lines in 1 buffered batch
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randomBytes := make([]byte, 8*n)
+	r.Read(randomBytes)
+	randomHexDigits := make([]byte, (linelength-1)*n)
+	outputBuffer := make([]byte, 0, linelength*n+1) // 1 '\n' after every 16 digits
+
+	flushRefreshReuse := func() error {
+		_, err := w.Write(outputBuffer)
+		// Refresh work buffers with new random bytes
+		r.Read(randomBytes)
+		hex.Encode(randomHexDigits, randomBytes)
+		// Reuse output buffer
+		outputBuffer = outputBuffer[:0]
+		return err
+	}
+
+	for j := 0; j < data; j++ {
+		k := j % n
+		if k == 0 {
+			if err := flushRefreshReuse(); err != nil {
+				return err
+			}
+		}
+		outputBuffer = append(outputBuffer, randomHexDigits[(linelength-1)*k:(linelength-1)*k+(linelength-1)]...)
+		outputBuffer = append(outputBuffer, '\n')
+	}
+
+	return flushRefreshReuse()
+}
+
 func write(ctx context.Context, w io.Writer, goroutines, dataPerGoroutine, bufferSize, linelength int) error {
 	errs, _ := errgroup.WithContext(ctx)
 	var filelock sync.Mutex
@@ -405,6 +459,116 @@ func MergeSortedFiles(fileNames []string, outputFileName string, bufferSize, lin
 	}
 
 	return flushAndReuse()
+}
+
+func MergeSortedFilesParallel(fileNames []string, outputFileName string, bufferSize, linelength int) error {
+	files := make([]*os.File, len(fileNames))
+	defer func() {
+		for _, file := range files {
+			file.Close()
+		}
+	}()
+
+	// Open all the input files
+	for i, fileName := range fileNames {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return err
+		}
+		files[i] = file
+	}
+
+	// Initialize the min heap with the first value from each file
+	h := &minHeap{}
+
+	limit := bufferSize * 128
+	outputBuffer := make([]byte, 0, limit)
+
+	for _, file := range files {
+		buf := make([]byte, 17)
+		_, err := file.Read(buf)
+		if err != nil {
+			continue
+		}
+
+		// Remove the newline character from the line
+		heap.Push(h, &fileItem{
+			file: file,
+			val:  buf,
+		})
+	}
+	var wg sync.WaitGroup
+	in := make(chan []byte)
+	done := make(chan struct{})
+	wg.Add(1)
+	go WrideDataToFile(outputFileName, in, done, &wg)
+
+	flushAndReuse := func() error {
+		copyBuffer := outputBuffer[:]
+		in <- copyBuffer
+		outputBuffer = outputBuffer[:0]
+		return nil
+	}
+
+	// Pop the smallest value from the heap and write it to the output file
+	for h.Len() > 0 {
+		item := heap.Pop(h).(*fileItem)
+
+		outputBuffer = append(outputBuffer, item.val...)
+		if len(outputBuffer) >= limit {
+			if err := flushAndReuse(); err != nil {
+				return err
+			}
+		}
+		// Read the next value from the file and add it to the heap
+		buf := make([]byte, 17)
+		_, err := item.file.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				continue
+			}
+			return err
+		}
+
+		heap.Push(h, &fileItem{
+			file: item.file,
+			val:  buf,
+		})
+	}
+
+	err := flushAndReuse()
+	if err != nil {
+		return err
+	}
+
+	close(done)
+	wg.Wait()
+	return nil
+}
+
+func WrideDataToFile(file string, data <-chan []byte, done <-chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
+	outFile, err := os.Create(file)
+	if err != nil {
+		return
+	}
+	defer outFile.Close()
+
+	var m sync.Mutex
+
+	for {
+		select {
+		case d := <-data:
+			m.Lock()
+			_, err := outFile.Write(d)
+			m.Unlock()
+			if err != nil {
+				return
+			}
+		case <-done:
+			return
+		}
+	}
 }
 
 func ReadLine(r io.Reader) (string, error) {

@@ -42,7 +42,7 @@ spec:
 
   - name: split
     container:
-      image: us-docker.pkg.dev/trillionsort/images/filesplit:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      image: us-docker.pkg.dev/trillionsort/images/filesplit:6327330fbfdb0baceee563ac36dafc0d5e7554b0
       command: ["/filesplit"]
       args: ["-count", "10", "-input", "data/join.txt", "-output", "data/split.txt"]
       volumeMounts:
@@ -60,7 +60,7 @@ spec:
       parameters:
       - name: index
     container:
-      image: us-docker.pkg.dev/trillionsort/images/sortfile:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      image: us-docker.pkg.dev/trillionsort/images/sortfile:6327330fbfdb0baceee563ac36dafc0d5e7554b0
       command: ["/sortfile"]
       args: ["-input", "data/split.txt", "-index", "{{inputs.parameters.index}}", "-output", "data/sort.txt"]
       volumeMounts:
@@ -75,7 +75,7 @@ spec:
           memory: "4Gi"
   - name: merge
     container: 
-      image: us-docker.pkg.dev/trillionsort/images/externalsort:2ba77694b82b0a8b4530314b0f6b7e269c9f3cc4
+      image: us-docker.pkg.dev/trillionsort/images/externalsort:6327330fbfdb0baceee563ac36dafc0d5e7554b0
       command: ["/externalsort"]
       args: ["-dir", "data", "-pattern", "sort", "-output", "data/merge.txt"]
       volumeMounts:
