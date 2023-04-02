@@ -20,7 +20,7 @@ spec:
             readOnly: false
       containers:
       - name: join
-        image: us-docker.pkg.dev/trillionsort/images/joinfile:dd98a377f17617915577da4528e62defcc974094
+        image: us-docker.pkg.dev/trillionsort/images/joinfile:3e8ff1ae13a02b06fe2866154b9eb97dbfbde70c
         command: ["/joinfile"]
         args: ["-dir", "data", "-pattern", "generate", "-output", "data/join.txt"]
         volumeMounts:

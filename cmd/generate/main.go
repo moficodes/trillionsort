@@ -71,7 +71,7 @@ func write(ctx context.Context, filename string, cfg *fileops.Config) error {
 			return err
 		}
 
-		writer = client.Bucket(cfg.Bucket).Object(filename).NewWriter(ctx)
+		writer = client.Bucket(cfg.Bucket).Object(outputFile).NewWriter(ctx)
 	} else {
 		err = fileops.DeleteFileIfExists(outputFile)
 		if err != nil {

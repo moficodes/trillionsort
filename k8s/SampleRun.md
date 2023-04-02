@@ -134,7 +134,7 @@ Controlled By:  Job/generate
 Containers:
   generate:
     Container ID:  containerd://a13b8ce2d08c6cedfd06083a8961dd8a19347d70eb7277a247e54bbf2110b94c
-    Image:         us-docker.pkg.dev/trillionsort/images/generate:dd98a377f17617915577da4528e62defcc974094
+    Image:         us-docker.pkg.dev/trillionsort/images/generate:3e8ff1ae13a02b06fe2866154b9eb97dbfbde70c
     Image ID:      us-docker.pkg.dev/trillionsort/images/generate@sha256:aa3849b2317ac56bc0ef6e85f3401fcabd7b1f5b7d2539ee6dc6fdea461c0f37
     Port:          <none>
     Host Port:     <none>
@@ -191,7 +191,7 @@ Events:
   ----     ------               ----   ----               -------
   Normal   Scheduled            5m38s  default-scheduler  Successfully assigned default/generate-99-87wk9 to gke-trilliosort-demo-default-pool-b3bd6eb0-ssgv
   Warning  ExceededGracePeriod  5m13s  kubelet            Container runtime did not kill the pod within specified grace period.
-  Normal   Pulled               5m13s  kubelet            Container image "us-docker.pkg.dev/trillionsort/images/generate:dd98a377f17617915577da4528e62defcc974094" already present on machine
+  Normal   Pulled               5m13s  kubelet            Container image "us-docker.pkg.dev/trillionsort/images/generate:3e8ff1ae13a02b06fe2866154b9eb97dbfbde70c" already present on machine
   Normal   Created              5m13s  kubelet            Created container generate
   Normal   Started              5m13s  kubelet            Started container generate
   Normal   Killing              5m13s  kubelet            Stopping container generate

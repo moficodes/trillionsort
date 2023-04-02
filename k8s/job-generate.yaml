@@ -21,7 +21,7 @@ spec:
             secretName: gcs-key
       containers:
       - name: generate
-        image: us-docker.pkg.dev/trillionsort/images/generate:dd98a377f17617915577da4528e62defcc974094
+        image: us-docker.pkg.dev/trillionsort/images/generate:3e8ff1ae13a02b06fe2866154b9eb97dbfbde70c
         command: ["/generate"]
         args: ["-count", "1_000_000", "-file", "generate.txt", "-fileindex", "$(JOB_COMPLETION_INDEX)", "-objectstorage", "-bucket", "demo-00-mofi"]
         volumeMounts:
